@@ -12,28 +12,72 @@ cat > Projectfile <<-Deps
   deps do
     github "Codcore/amethyst"
     github "spalger/crystal-mime"
+
+    # TODO - Add ORM
+    github "manastech/crystal-sqlite3"
   end
 Deps
 # Fetch the dependencies
 crystal deps
-# Create views and controllers folders
-mkdir src/$app_name/views
-mkdir src/$app_name/controllers
+## Create views and controllers folders
+mkdir app
+mkdir app/assets
+mkdir app/assets/javascripts
+mkdir app/assets/stylesheets
+mkdir app/controllers
+mkdir app/models
+mkdir app/views
+
+mkdir config
+mkdir db
+mkdir db/migrate
+mkdir docs
+mkdir public
+mkdir scripts
+
+#Create database.yml
+cat > config/database.yml <<EOF
+development:
+  adapter: sqlite3
+  database: db/development.sqlite3
+  pool: 5
+  timeout: 5000
+EOF
+
+# development log
+mkdir logs
+cat > logs/development.log <<EOF
+  use Amethyst::Middleware::ShowExceptions
+  use Amethyst::Middleware::HttpLogger
+  use Amethyst::Middleware::TimeLogger
+  use Amethyst::Middleware::Session
+  use Amethyst::Middleware::Static
+EOF
+
 # Remove the default crystal src file
 rm src/$app_name.cr
 touch src/$app_name.cr
 # Class name needs to be capitalized
 class_name="$(tr '[:lower:]' '[:upper:]' <<< ${app_name:0:1})${app_name:1}"
 class_name+="App"
-# Create base app with given name under src/app_name.cr
-cat > src/$app_name.cr <<- App
-require "amethyst"
-class $class_name < Base::App
-  routes.draw do
-    # Here you define your routes e.g
-    # get '/hello', "world#hello"
-  end
+
+module $class_name
+  class Application < Base::App
+
+    settings.configure do |conf|
+      conf.environment = "development"
+      conf.static_dirs = ["/public"]
+    end
+
+    routes.draw do
+      #Here define your routes
+      #all "/", "welcome#index"
+    end
+
+    #register WelcomeController
+   end
 end
+
 app = $class_name.new
 app.serve
 App
